@@ -20,41 +20,45 @@ const createCanvas = (id: string): HTMLCanvasElement => {
     return canvas.buildCanvas(id)
 }
 
-const DISTANCE_BETWEEN = 45
 
-class CoordinateAxes {
-    canvasWidth: number
-    canvasHeight: number
+class DimensionalSpace {
+    #canvasWidth: number
+    #canvasHeight: number
+    #distanceBetween: number
+    #context: CanvasRenderingContext2D | null
     coordinates: {
         x: number, y: number, value: number, type: 'X' | 'Y' | '0'
     }[]
 
-    constructor(canvasWidth: number = 0, canvasHeight: number = 0) {
-        this.canvasHeight = canvasHeight
-        this.canvasWidth = canvasWidth
+    constructor(canvasWidth: number = 0, canvasHeight: number = 0, distanceBetween: number = 45) {
+        this.#canvasHeight = canvasHeight
+        this.#canvasWidth = canvasWidth
+        this.#context = null
         this.coordinates = []
+        this.#distanceBetween = distanceBetween
     }
 
-    draw(context: CanvasRenderingContext2D, distanceBetween: number = DISTANCE_BETWEEN) {
+    draw(context: CanvasRenderingContext2D) {
         // Build axe Y
         context.fillStyle = '#1f1f1f'
-        context.fillRect(this.canvasWidth / 2, 0, 1, this.canvasHeight)
+        context.fillRect(this.#canvasWidth / 2, 0, 1, this.#canvasHeight)
 
         // Build axe X
         context.fillStyle = '#1f1f1f'
-        context.fillRect(0, this.canvasHeight / 2, this.canvasWidth, 1)
+        context.fillRect(0, this.#canvasHeight / 2, this.#canvasWidth, 1)
 
-        this.#buildCoordinates(context, distanceBetween)
+        this.#buildCoordinates(context)
     }
 
     // Distance between coordinates = 25
-    #buildCoordinates(context: CanvasRenderingContext2D, distanceBetween: number = DISTANCE_BETWEEN) {
-        const halfCanvasWidth = this.canvasWidth / 2
-        const halfCanvasHeight = this.canvasHeight / 2
+    #buildCoordinates(context: CanvasRenderingContext2D) {
+        this.#context = context
+        const halfCanvasWidth = this.#canvasWidth / 2
+        const halfCanvasHeight = this.#canvasHeight / 2
         // halfCanvasWidth = 450 
         // halfCanvasWidth / distanceBetween = 18. 
         // 18 coordinates points - and +
-        
+
         const coordinates: Array<{ x: number, y: number, value: number, type: 'X' | 'Y' | '0', }> = [{
             value: 0,
             x: halfCanvasWidth,
@@ -68,7 +72,7 @@ class CoordinateAxes {
 
             while (pointsCreateds <= points) {
                 pointsCreateds++
-                const axeDistance = (pointsCreateds * distanceBetween)
+                const axeDistance = (pointsCreateds * this.#distanceBetween)
 
                 coordinates.push({
                     x: isAxeX ? halfCanvasWidth - axeDistance : halfCanvasWidth,
@@ -86,8 +90,8 @@ class CoordinateAxes {
             }
         }
 
-        createPointCoortinate((halfCanvasWidth / distanceBetween), 'X')
-        createPointCoortinate((halfCanvasHeight / distanceBetween), 'Y')
+        createPointCoortinate((halfCanvasWidth / this.#distanceBetween), 'X')
+        createPointCoortinate((halfCanvasHeight / this.#distanceBetween), 'Y')
 
         this.coordinates = coordinates
 
@@ -100,7 +104,7 @@ class CoordinateAxes {
 
             const isAxeX = type === 'X'
             const text = `${value}`
-            const fM = context.measureText(text)    
+            const fM = context.measureText(text)
             const textWidth = fM.width
             const textHeigth = fM.actualBoundingBoxAscent + fM.actualBoundingBoxDescent;
 
@@ -121,6 +125,29 @@ class CoordinateAxes {
             context.fillRect(linePositionX, linePositionY, lineX, lineY)
         })
     }
+
+    createLine(y: number, x: number) {
+        if (!this.#context) return;
+
+        const halfCanvasWidth = this.#canvasWidth / 2
+        const halfCanvasHeight = this.#canvasHeight / 2
+
+
+        let positions = {
+            y: y > 0 ? halfCanvasHeight - (y * this.#distanceBetween) : halfCanvasHeight + -(this.#distanceBetween * Math.trunc(y)),
+            x: x > 0 ? halfCanvasWidth + (this.#distanceBetween * x) : (halfCanvasWidth - -(this.#distanceBetween * Math.trunc(x)))
+        }   
+
+        this.#context.fillStyle = '#fff'
+
+        this.#context.beginPath()
+        this.#context.moveTo(halfCanvasWidth, positions.y)
+        this.#context.lineTo(positions.x, positions.y)
+
+        this.#context.moveTo(positions.x, halfCanvasHeight)
+        this.#context.lineTo(positions.x, positions.y)
+        this.#context.stroke()
+    }
 }
 
 window.addEventListener('load', function () {
@@ -133,9 +160,16 @@ window.addEventListener('load', function () {
     canvas.width = canvasWidth
     canvas.height = canvasHeight
 
+    const DISTANCE_BETWEEN = 40
     ctx.fillStyle = '#393939'
     ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
-    const coordinateAxes = new CoordinateAxes(canvasWidth, canvasHeight)
-    coordinateAxes.draw(ctx)
+    const dimensionalSpace = new DimensionalSpace(canvasWidth, canvasHeight, DISTANCE_BETWEEN)
+    dimensionalSpace.draw(ctx)
+    for (let i = 1; i - 1 < 4; i++) {
+        dimensionalSpace.createLine(-i, -i)
+        dimensionalSpace.createLine(i, -i)
+        dimensionalSpace.createLine(i, i)
+        dimensionalSpace.createLine(-i, i)
+    }
 })
