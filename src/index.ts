@@ -131,8 +131,7 @@ class DimensionalSpace {
 
         const halfCanvasWidth = this.#canvasWidth / 2
         const halfCanvasHeight = this.#canvasHeight / 2
-
-
+        
         let positions = {
             y: y > 0 ? halfCanvasHeight - (y * this.#distanceBetween) : halfCanvasHeight + -(this.#distanceBetween * Math.trunc(y)),
             x: x > 0 ? halfCanvasWidth + (this.#distanceBetween * x) : (halfCanvasWidth - -(this.#distanceBetween * Math.trunc(x)))
